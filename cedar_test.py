@@ -1,5 +1,7 @@
 # Create new CEDAR metadata instance and enter data
 
+# N.B. For arrays, only first slot is currently tested.
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
@@ -32,14 +34,14 @@ form = [('text', ('Minimal Info', 'study_name'), 'Study Title or Name', None, 5)
         ('text', ('Minimal Info', 'study_description'), 'Study Description or Abstract', None, 24),
         ('text', ('Minimal Info', 'study_nickname'), 'Study Nickname or Alternative Title', None, 3),
         ('text', ('Metadata Location Updated', 'Metadata Location - Details', 'nih_application_id'), 'NIH Application ID', None, 1),
-        ('text', ('Metadata Location Updated', 'Metadata Location - Details', 'nih_reporter_link'), 'NIH RePORTER Link', 'http://example.com'),
+        ('link', ('Metadata Location Updated', 'Metadata Location - Details', 'nih_reporter_link'), 'NIH RePORTER Link', 'http://example.com'),
         ('text', ('Metadata Location Updated', 'Metadata Location - Details', 'clinical_trials_study_id'), 'ClinicalTrials.gov Study ID', None, 1),
         ('text', ('Metadata Location Updated', 'Data Repositories', 'repository_name'), 'Name of Repository', None, 3),
         ('text', ('Metadata Location Updated', 'Data Repositories', 'repository_study_ID'), 'Study ID assigned by Repository', None, 1),
         ('text', ('Metadata Location Updated', 'Data Repositories', 'repository_persistent_ID'), 'Repository-branded Study Persistent Identifier', None, 1),
         ('text', ('Metadata Location Updated', 'Data Repositories', 'repository_citation'), 'Study citation at Repository', None, 12),
         ('text', ('Metadata Location Updated', 'cedar_study_level_metadata_template_instance_ID'), 'CEDAR Study-level Metadata Template Instance ID', None, 12),
-        ('text', ('Metadata Location Updated', 'other_study_websites'), 'Other Study-Associated Websites', 'http://example.com'),
+        ('link', ('Metadata Location Updated', 'other_study_websites'), 'Other Study-Associated Websites', 'http://example.com'),
         ('radio', ('Citation', 'heal_funded_status'), 'Is this study HEAL-funded?')]
 
 # Increase in case of TimeoutException
@@ -96,7 +98,7 @@ def populate_template(TEMPLATE, form):
     
     values = {}
     for field in form:
-        if field[0]=='text':
+        if field[0] in ['text','link']:
             enter_text(values, field[1][-1], *field[2:])
         elif field[0]=='radio':
             enter_radio(values, field[1][-1], *field[2:])
@@ -114,7 +116,7 @@ def verify_metadata(uuid, values):
     endpoint='template-instances'
     key = keyring.get_password('resource.metadatacenter.org', USER)
     instance = f'https%3A%2F%2Frepo.metadatacenter.org%2F{endpoint}%2F{uuid}'
-    url = f'{API_BASE}{endpoint}/{instance}?format=json'
+    url = f'{API_BASE}{endpoint}/{instance}?format=jsonld'
     response = requests.get(url, headers={'Accept':'application/json',
                                           'Authorization':f'apiKey {key}'})
     metadata = response.json()
@@ -122,16 +124,17 @@ def verify_metadata(uuid, values):
     valid = invalid = 0
     for field in form:
         fieldname = field[1][-1]
-        value = metadata
-        for key in field[1]:
-            try:
-                value = value[key]
-            except TypeError:
-                value = value[0][key]
+        value = metadata[field[1][0]]
+        for key in field[1][1:]:
+            value = value[key]
+            if isinstance(value, list):
+                value = value[0]
+        # Link fields use '@id' as key
+        value = value.get('@value', value.get('@id'))
         if value == values[fieldname]:
             valid += 1
         else:
-            logger.info(f'Value "{value}" invalid for {field[1][-1]}: "{values[fieldname]}"')
+            logger.info(f'Value "{value}" invalid for {field[1][-1]}; "{values[fieldname]}" entered')
             invalid += 1
     logger.info(f'{valid} fields valid; {invalid} invalid')
 
@@ -161,6 +164,8 @@ while True:
     uuid, values = populate_template(TEMPLATE, form)
     verify_metadata(uuid, values)
     delete_instance(uuid)
-    time.sleep(10)
+    # Uncomment to run continuously
+    break
+    time.sleep(20)
 
 driver.quit()
