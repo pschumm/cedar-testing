@@ -30,19 +30,35 @@ logger = logging.getLogger('cedar-testing')
 logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 
-form = [('text', ('Minimal Info', 'study_name'), 'Study Title or Name', None, 5),
-        ('text', ('Minimal Info', 'study_description'), 'Study Description or Abstract', None, 24),
-        ('text', ('Minimal Info', 'study_nickname'), 'Study Nickname or Alternative Title', None, 3),
-        ('text', ('Metadata Location Updated', 'Metadata Location - Details', 'nih_application_id'), 'NIH Application ID', None, 1),
-        ('link', ('Metadata Location Updated', 'Metadata Location - Details', 'nih_reporter_link'), 'NIH RePORTER Link', 'http://example.com'),
-        ('text', ('Metadata Location Updated', 'Metadata Location - Details', 'clinical_trials_study_id'), 'ClinicalTrials.gov Study ID', None, 1),
-        ('text', ('Metadata Location Updated', 'Data Repositories', 'repository_name'), 'Name of Repository', None, 3),
-        ('text', ('Metadata Location Updated', 'Data Repositories', 'repository_study_ID'), 'Study ID assigned by Repository', None, 1),
-        ('text', ('Metadata Location Updated', 'Data Repositories', 'repository_persistent_ID'), 'Repository-branded Study Persistent Identifier', None, 1),
-        ('text', ('Metadata Location Updated', 'Data Repositories', 'repository_citation'), 'Study citation at Repository', None, 12),
-        ('text', ('Metadata Location Updated', 'cedar_study_level_metadata_template_instance_ID'), 'CEDAR Study-level Metadata Template Instance ID', None, 12),
-        ('link', ('Metadata Location Updated', 'other_study_websites'), 'Other Study-Associated Websites', 'http://example.com'),
-        ('radio', ('Citation', 'heal_funded_status'), 'Is this study HEAL-funded?')]
+form = [
+    ('text', ('Minimal Info', 'study_name'), 'Study Title or Name', None, 5),
+    ('text', ('Minimal Info', 'study_description'), 'Study Description or Abstract', None, 24),
+    ('text', ('Minimal Info', 'study_nickname'), 'Study Nickname or Alternative Title', None, 3),
+    ('text', ('Metadata Location Updated', 'Metadata Location - Details', 'nih_application_id'), 'NIH Application ID', None, 1),
+    ('link', ('Metadata Location Updated', 'Metadata Location - Details', 'nih_reporter_link'), 'NIH RePORTER Link', 'http://example.com'),
+    ('text', ('Metadata Location Updated', 'Metadata Location - Details', 'clinical_trials_study_id'), 'ClinicalTrials.gov Study ID', None, 1),
+    ('text', ('Metadata Location Updated', 'Data Repositories', 'repository_name'), 'Name of Repository', None, 3),
+    ('text', ('Metadata Location Updated', 'Data Repositories', 'repository_study_ID'), 'Study ID assigned by Repository', None, 1),
+    ('text', ('Metadata Location Updated', 'Data Repositories', 'repository_persistent_ID'), 'Repository-branded Study Persistent Identifier', None, 1),
+    ('text', ('Metadata Location Updated', 'Data Repositories', 'repository_citation'), 'Study citation at Repository', None, 12),
+    ('text', ('Metadata Location Updated', 'cedar_study_level_metadata_template_instance_ID'), 'CEDAR Study-level Metadata Template Instance ID', None, 12),
+    ('link', ('Metadata Location Updated', 'other_study_websites'), 'Other Study-Associated Websites', 'http://example.com'),
+    ('radio', ('Citation', 'heal_funded_status'), 'Is this study HEAL-funded?'),
+    ('radio', ('Citation', 'study_collection_status'), 'Does this study belong to a study group or collection?'),
+    ('text', ('Citation', 'study_collections'), 'Name of the study group or collection(s) to which this study belongs', None, 3),
+    ('text', ('Citation', 'Funding', 'funder_name'), 'Funder or Grant Agency Name', None, 2),
+    ('text', ('Citation', 'Funding', 'funder_abbreviation'), 'Funder or Grant Agency Abbreviation or Acronym', None, 1),
+    # ('dropdown', ('Citation', 'Funding', 'funder_type'), 'Funder or Grant Agency Type'),
+    # ('dropdown', ('Citation', 'Funding', 'funder_geographic_reach'), 'Funder Geographic Reach'),
+    ('text', ('Citation', 'Funding', 'funding_award_id'), 'Funding or Grant Award ID', None, 1),
+    ('text', ('Citation', 'Funding', 'funding_award_name'), 'Funding or Grant Award Name', None, 1),
+    ('text', ('Citation', 'Investigators', 'investigator_first_name'), 'Investigator First Name', None, 1),
+    ('text', ('Citation', 'Investigators', 'investigator_middle_initial'), 'Investigator Middle Initial', None, 1),
+    ('text', ('Citation', 'Investigators', 'investigator_last_name'), 'Investigator Last Name', None, 1),
+    ('text', ('Citation', 'Investigators', 'investigator_affiliation'), 'Investigator Institutional Affiliation', None, 3),
+    # ('dropdown', ('Citation', 'Investigators', 'Investigator Identifiers', 'investigator_ID_type'), 'Identifier Type'),
+    ('text', ('Citation', 'Investigators', 'Investigator Identifiers', 'investigator_ID_value'), 'Identifier Value', None, 1)
+]
 
 # Increase in case of TimeoutException
 WAIT = 5
