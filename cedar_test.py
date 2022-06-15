@@ -48,15 +48,15 @@ form = [
     ('text', ('Citation', 'study_collections'), 'Name of the study group or collection(s) to which this study belongs', None, 3),
     ('text', ('Citation', 'Funding', 'funder_name'), 'Funder or Grant Agency Name', None, 2),
     ('text', ('Citation', 'Funding', 'funder_abbreviation'), 'Funder or Grant Agency Abbreviation or Acronym', None, 1),
-    # ('dropdown', ('Citation', 'Funding', 'funder_type'), 'Funder or Grant Agency Type'),
-    # ('dropdown', ('Citation', 'Funding', 'funder_geographic_reach'), 'Funder Geographic Reach'),
+    ('picklist', ('Citation', 'Funding', 'funder_type'), 'Funder or Grant Agency Type'),
+    ('picklist', ('Citation', 'Funding', 'funder_geographic_reach'), 'Funder Geographic Reach'),
     ('text', ('Citation', 'Funding', 'funding_award_id'), 'Funding or Grant Award ID', None, 1),
     ('text', ('Citation', 'Funding', 'funding_award_name'), 'Funding or Grant Award Name', None, 1),
     ('text', ('Citation', 'Investigators', 'investigator_first_name'), 'Investigator First Name', None, 1),
     ('text', ('Citation', 'Investigators', 'investigator_middle_initial'), 'Investigator Middle Initial', None, 1),
     ('text', ('Citation', 'Investigators', 'investigator_last_name'), 'Investigator Last Name', None, 1),
     ('text', ('Citation', 'Investigators', 'investigator_affiliation'), 'Investigator Institutional Affiliation', None, 3),
-    # ('dropdown', ('Citation', 'Investigators', 'Investigator Identifiers', 'investigator_ID_type'), 'Identifier Type'),
+    ('picklist', ('Citation', 'Investigators', 'Investigator Identifiers', 'investigator_ID_type'), 'Identifier Type'),
     ('text', ('Citation', 'Investigators', 'Investigator Identifiers', 'investigator_ID_value'), 'Identifier Value', None, 1)
 ]
 
@@ -78,7 +78,6 @@ def enter_text(values, fieldname, label, value=None, words=1):
     submit = WebDriverWait(driver, WAIT).until(
         EC.presence_of_element_located((By.XPATH, f'//div[contains(text(), "{label}")]/../..//button[@type="submit"]'))
     )
-    time.sleep(1)
     submit.click()
 
 def enter_radio(values, fieldname, label):
@@ -86,11 +85,28 @@ def enter_radio(values, fieldname, label):
         EC.presence_of_element_located((By.XPATH, f'//div[contains(text(), "{label}")]/../..//div[@class="answer ng-scope"]'))
     )
     field.click()
-    time.sleep(1)
     options = driver.find_elements(By.XPATH, f'//div[contains(text(), "{label}")]//../..//input[@type="radio"]')
-    option = random.choice(options)
-    option.click()
-    values[fieldname] = option.accessible_name
+    choice = random.choice(options)
+    values[fieldname] = choice.accessible_name
+    choice.click()
+    submit = WebDriverWait(driver, WAIT).until(
+        EC.presence_of_element_located((By.XPATH, f'//div[contains(text(), "{label}")]/../..//button[@type="submit"]'))
+    )
+    submit.click()
+
+def enter_picklist(values, fieldname, label):
+    field = WebDriverWait(driver, WAIT).until(
+        EC.presence_of_element_located((By.XPATH, f'//div[contains(text(), "{label}")]/../..//div[@class="answer ng-scope"]'))
+    )
+    field.click()
+    textbox = WebDriverWait(driver, WAIT).until(
+        EC.presence_of_element_located((By.XPATH, f'//div[contains(text(), "{label}")]//../..//input[@type="search"]'))
+    )
+    textbox.click()
+    options = driver.find_elements(By.XPATH, f'//div[contains(text(), "{label}")]//../..//div[@class="ui-select-choices-row ng-scope"]')
+    choice = random.choice(options)
+    values[fieldname] = choice.accessible_name
+    choice.click()
     submit = WebDriverWait(driver, WAIT).until(
         EC.presence_of_element_located((By.XPATH, f'//div[contains(text(), "{label}")]/../..//button[@type="submit"]'))
     )
@@ -117,7 +133,10 @@ def populate_template(TEMPLATE, form):
         if field[0] in ['text','link']:
             enter_text(values, field[1][-1], *field[2:])
         elif field[0]=='radio':
-            enter_radio(values, field[1][-1], *field[2:])
+            enter_radio(values, field[1][-1], field[2])
+        elif field[0]=='picklist':
+            enter_picklist(values, field[1][-1], field[2])
+        time.sleep(1)
     
     # Save and return to workspace
     driver.find_element(By.XPATH, '//button[text()="Save"]').click()
@@ -167,21 +186,21 @@ def delete_instance(uuid):
 driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 driver.get(URL)
 
-# Log in
-WebDriverWait(driver, WAIT).until(EC.presence_of_element_located((By.ID, 'kc-login')))
-username = driver.find_element(By.ID, 'username')
-password = driver.find_element(By.ID, 'password')
-username.send_keys(USER)
-password.send_keys(keyring.get_password('auth.metadatacenter.org', 'pschumm@uchicago.edu'))
-driver.find_element(By.ID, 'kc-login').click()
-logger.info(f'Logged in as {USER}')
-
 while True:
+    # Log in
+    WebDriverWait(driver, WAIT).until(EC.presence_of_element_located((By.ID, 'kc-login')))
+    username = driver.find_element(By.ID, 'username')
+    password = driver.find_element(By.ID, 'password')
+    username.send_keys(USER)
+    password.send_keys(keyring.get_password('auth.metadatacenter.org', 'pschumm@uchicago.edu'))
+    driver.find_element(By.ID, 'kc-login').click()
+    logger.info(f'Logged in as {USER}')
+    
     uuid, values = populate_template(TEMPLATE, form)
     verify_metadata(uuid, values)
     delete_instance(uuid)
-    # Uncomment to run continuously
+    # Comment out next line to run continuously
     break
-    time.sleep(20)
+    time.sleep(30)
 
 driver.quit()
